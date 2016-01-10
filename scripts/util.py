@@ -2,7 +2,9 @@ from datetime import datetime
 import importlib
 import subprocess
 import os
-
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import f1_score
 import numpy as np
 
 from quadratic_weighted_kappa import quadratic_weighted_kappa
@@ -11,6 +13,12 @@ from quadratic_weighted_kappa import quadratic_weighted_kappa
 def float32(k):
     return np.cast['float32'](k)
 
+def F1Score(y_test, y_pred):
+    f1 = [0] * y_test.shape[0]
+    for i in range(y_test.shape[0]):
+        f1[i] = f1_score(y_true[i,:], y_pred[i,:], average='micro')  
+    return np.sum(f1)/1.0/y_test.shape[0]
+    
 
 def kappa(y_true, y_pred):
     y_true = np.array(y_true)

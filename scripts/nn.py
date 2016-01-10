@@ -16,6 +16,13 @@ import data
 import util
 import iterator
 
+def multilabel_objective(predictions, targets):
+    epsilon = np.float32(1.0e-6)
+    one = np.float32(1.0)
+    pred = T.clip(predictions, epsilon, one - epsilon)
+    return -T.sum(targets * T.log(pred) + (one - targets) * T.log(one - pred), axis=1)
+
+
 class Objective(object):
     _valid_aggregation = {None, 'mean', 'sum'}
 
@@ -94,7 +101,7 @@ def create_net(config, **kwargs):
             Schedule('update_learning_rate', config.get('schedule'),
                      weights_file=config.final_weights_file),
             SaveBestWeights(weights_file=config.weights_file, 
-                            loss='kappa', greater_is_better=True,),
+                            loss='F1', greater_is_better=True,),
             SaveWeights(config.weights_epoch, every_n_epochs=5),
             SaveWeights(config.weights_best, every_n_epochs=1, only_best=True),
         ],
@@ -102,13 +109,13 @@ def create_net(config, **kwargs):
         'use_label_encoder': False,
         'eval_size': 0.1,
         'regression': True,
-        'max_epochs': 1000,
+        'max_epochs': 100,
         'verbose': 2,
         'update_learning_rate': theano.shared(
             util.float32(config.get('schedule')[0])),
         'update': nesterov_momentum,
         'update_momentum': 0.9,
-        'custom_score': ('kappa', util.kappa),
+        'custom_score': ('F1', util.F1Score),
 
     }
     args.update(kwargs)
