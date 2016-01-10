@@ -1,8 +1,3 @@
-"""IO and data augmentation.
-
-The code for data augmentation originally comes from
-https://github.com/benanne/kaggle-ndsb/blob/master/data.py
-"""
 from __future__ import division, print_function
 from collections import Counter
 import os
@@ -21,20 +16,14 @@ RANDOM_STATE = 9
 FEATURE_DIR = 'data/features'
 classes = 1
 # channel standard deviations
-#STD = np.array([70.53946096, 51.71475228, 43.03428563], dtype=np.float32)
+STD = np.array([ 59.536900306514561, 59.612015707074633, 58.426495668457079],dtype = np.float32)
 
 # channel means
 MEAN = np.array([124.40699823710742, 105.70438580382198, 88.772083732842859],dtype = np.float32)
 
-STD = np.array([ 59.536900306514561, 59.612015707074633, 58.426495668457079],dtype = np.float32)
 BALANCE_WEIGHTS = np.array([1.0, 1.0])
 
 # for color augmentation, computed with make_pca.py
-#U = np.array([[-0.56543481, 0.71983482, 0.40240142],
-#              [-0.5989477, -0.02304967, -0.80036049],
-#              [-0.56694071, -0.6935729, 0.44423429]] ,dtype=np.float32)
-#EV = np.array([1.65513492, 0.48450358, 0.1565086], dtype=np.float32)
-
 U = np.array([[-0.37264841  ,0.74801953,  0.54906273], 
 	      [-0.58934668 , 0.26625428, -0.76268085], 
 	      [-0.71678959 ,-0.60780131 , 0.3416276 ]], dtype = np.float32)
@@ -216,7 +205,7 @@ def std(files, batch_size=128):
 def get_labels(names,labels=None, label_file='../data/train-labels.csv', 
                per_patient=False):
     '''
- = pd.read_csv('../data/train-labels.csv', header=None, index_col = 0)[[1]].loc[[88,42254]].values.flatten()
+        = pd.read_csv('../data/train-labels.csv', header=None, index_col = 0)[[1]].loc[[88,42254]].values.flatten()
     '''
   
     if labels is None:
@@ -229,7 +218,7 @@ def get_labels(names,labels=None, label_file='../data/train-labels.csv',
 def get_image_files(datadir, left_only=False):
     fs = glob('{}/*'.format(datadir))
     n = len(fs)
-    #use 2% of data to tune the network first
+    #use 20% of data to tune the network first
     return np.array(sorted(fs[ : int(0.2 * n)]))
 
 
@@ -295,20 +284,4 @@ def split(files, labels, test_size=0.1, random_state=RANDOM_STATE):
     train, test = split_indices(files, labels, test_size, random_state)
     return files[train], files[test], labels[train,:], labels[test,:]
 
-
-def load_features(fnames, test=False):
-
-    if test:
-        fnames = [os.path.join(os.path.dirname(f), 
-                               os.path.basename(f).replace('train', 'test'))
-                  for f in fnames]
-
-    data = [np.load(f) for f in fnames]
-    data = [X.reshape([X.shape[0], -1]) for X in data]
-    return np.hstack(data)
-
-
-def parse_blend_config(cnf):
-    return {run: [os.path.join(FEATURE_DIR, f) for f in files] 
-            for run, files in cnf.items()}
 
