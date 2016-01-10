@@ -8,7 +8,7 @@ import util
 
 
 @click.command()
-@click.option('--directory', default='data/train_tiny')
+@click.option('--directory', default='../data/train')
 def main(directory):
 
     filenames = data.get_image_files(directory)
@@ -19,7 +19,7 @@ def main(directory):
 
     Us, evs = [], []
     for batch in batches:
-        images = np.array([data.load_augment(f, 128, 128) for f in batch])
+        images = np.array([data.load_augment(f, 256, 256) for f in batch])
         X = images.transpose(0, 2, 3, 1).reshape(-1, 3)
         cov = np.dot(X.T, X) / X.shape[0]
         U, S, V = np.linalg.svd(cov)

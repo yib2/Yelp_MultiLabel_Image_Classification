@@ -74,7 +74,7 @@ class SharedIterator(QueueIterator):
     def __init__(self, config, deterministic=False, *args, **kwargs):
         self.config = config
         self.deterministic = deterministic
-        self.pool = multiprocessing.Pool()
+        self.pool = multiprocessing.Pool(4)
         super(SharedIterator, self).__init__(*args, **kwargs)
 
 
@@ -122,9 +122,9 @@ class ResampleIterator(SharedIterator):
             class_weights = self.config.cnf['balance_weights'] * alpha \
                 + self.config.cnf['final_balance_weights'] * (1 - alpha)
             self.count += 1
-            indices = data.balance_per_class_indices(y, weights=class_weights)
-            X = X[indices]
-            y = y[indices]
+            #indices = data.balance_per_class_indices(y, weights=class_weights)
+            #X = X[indices]
+            #y = y[indices , :]
         return super(ResampleIterator, self).__call__(X, y, transform=transform,
                                                       color_vec=color_vec)
 

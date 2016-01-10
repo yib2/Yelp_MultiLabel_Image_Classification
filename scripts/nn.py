@@ -2,6 +2,7 @@ from __future__ import print_function
 from time import time
 
 import lasagne
+import lasagne as nn
 import lasagne.layers
 from lasagne.updates import nesterov_momentum
 #from lasagne.objectives import Objective
@@ -316,13 +317,14 @@ class Net(NeuralNet):
             t0 = time()
 
             for Xb, yb in self.batch_iterator_train(X_train, y_train):
+	  	yb = yb.reshape(yb.shape[0], yb.shape[2])
                 batch_train_loss = self.train_iter_(Xb, yb)
                 if not np.isfinite(batch_train_loss[0]):
                     raise ValueError("non finite loss")
                 train_losses.append(batch_train_loss)
 
             for Xb, yb in self.batch_iterator_test(X_valid, y_valid):
-
+		yb = yb.reshape(yb.shape[0], yb.shape[2])
                 batch_valid_loss, accuracy = self.eval_iter_(Xb, yb)
 
                 valid_losses.append(batch_valid_loss)

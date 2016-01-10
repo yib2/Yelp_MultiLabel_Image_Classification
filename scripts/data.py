@@ -10,7 +10,7 @@ from glob import glob
 
 import numpy as np
 import pandas as pd
-from PIL import Image
+from PIL  import Image
 import skimage
 import skimage.transform
 from skimage.transform._warps_cy import _warp_fast
@@ -19,20 +19,27 @@ from sklearn import cross_validation
 
 RANDOM_STATE = 9
 FEATURE_DIR = 'data/features'
-
+classes = 1
 # channel standard deviations
-STD = np.array([70.53946096, 51.71475228, 43.03428563], dtype=np.float32)
+#STD = np.array([70.53946096, 51.71475228, 43.03428563], dtype=np.float32)
 
 # channel means
-MEAN = np.array([108.64628601, 75.86886597, 54.34005737], dtype=np.float32)
+MEAN = np.array([124.40699823710742, 105.70438580382198, 88.772083732842859],dtype = np.float32)
 
+STD = np.array([ 59.536900306514561, 59.612015707074633, 58.426495668457079],dtype = np.float32)
 BALANCE_WEIGHTS = np.array([1.0, 1.0])
 
 # for color augmentation, computed with make_pca.py
-U = np.array([[-0.56543481, 0.71983482, 0.40240142],
-              [-0.5989477, -0.02304967, -0.80036049],
-              [-0.56694071, -0.6935729, 0.44423429]] ,dtype=np.float32)
-EV = np.array([1.65513492, 0.48450358, 0.1565086], dtype=np.float32)
+#U = np.array([[-0.56543481, 0.71983482, 0.40240142],
+#              [-0.5989477, -0.02304967, -0.80036049],
+#              [-0.56694071, -0.6935729, 0.44423429]] ,dtype=np.float32)
+#EV = np.array([1.65513492, 0.48450358, 0.1565086], dtype=np.float32)
+
+U = np.array([[-0.37264841  ,0.74801953,  0.54906273], 
+	      [-0.58934668 , 0.26625428, -0.76268085], 
+	      [-0.71678959 ,-0.60780131 , 0.3416276 ]], dtype = np.float32)
+
+EV = np.array([ 2.50289082,  0.62548741,  0.24144159], dtype = np.float32)
 
 no_augmentation_params = {
     'zoom_range': (1.0, 1.0),
@@ -206,17 +213,24 @@ def std(files, batch_size=128):
     return np.sqrt(var)
 
 
-def get_labels(names, classes, labels=None, label_file='../data/train-labels.csv', 
+def get_labels(names,labels=None, label_file='../data/train-labels.csv', 
                per_patient=False):
-    
+    '''
+ = pd.read_csv('../data/train-labels.csv', header=None, index_col = 0)[[1]].loc[[88,42254]].values.flatten()
+    '''
+  
     if labels is None:
-        labels = pd.read_csv(label_file, header=None, index_col = 0)[[classes]].loc[names].values.flatten()
-    return labels
+        labels = pd.read_csv(label_file, header=None, index_col = 0)
+ 	cols = labels.columns[0:]
+	labels = labels[cols].loc[names]
+    return np.array(labels, dtype = np.float32)
 
 
 def get_image_files(datadir, left_only=False):
     fs = glob('{}/*'.format(datadir))
-    return np.array(sorted(fs))
+    n = len(fs)
+    #use 2% of data to tune the network first
+    return np.array(sorted(fs[ : int(0.2 * n)]))
 
 
 def get_names(files):
@@ -245,13 +259,12 @@ def balance_shuffle_indices(y, random_state=None, weight=BALANCE_WEIGHTS):
 
 
 def balance_per_class_indices(y, weights=BALANCE_WEIGHTS):
-    y = np.array(y)
-    weights = np.array(weights, dtype=float)
-    p = np.zeros(len(y))
-    for i, weight in enumerate(weights):
-        p[y==i] = weight
-    return np.random.choice(np.arange(len(y)), size=len(y), replace=True, 
-                            p=np.array(p) / p.sum())
+    #y = np.array(y)
+    #weights = np.array(weights, dtype=float)
+    #p = np.zeros(len(y))
+    #for i, weight in enumerate(weights):
+    #    p[y==i] = weight
+    return np.random.choice(np.arange(y.shape[0]), size=y.shape[0], replace=True, p=0.5)
 
 
 def get_weights(y, weights=BALANCE_WEIGHTS):
@@ -265,20 +278,22 @@ def get_weights(y, weights=BALANCE_WEIGHTS):
 
 def split_indices(files, labels, test_size=0.1, random_state=RANDOM_STATE):
     names = get_names(files)
-    labels = get_labels(names, per_patient=True)
-    spl = cross_validation.StratifiedShuffleSplit(labels[:, 0], 
+    names = [ int(x) for x in names]
+    labels = get_labels(names)
+    spl = cross_validation.StratifiedShuffleSplit(labels, 
                                                   test_size=test_size, 
                                                   random_state=random_state,
                                                   n_iter=1)
+    
     tr, te = next(iter(spl))
-    tr = np.hstack([tr * 2, tr * 2 + 1])
-    te = np.hstack([te * 2, te * 2 + 1])
+    #tr = np.hstack([tr * 2, tr * 2 + 1])
+    #te = np.hstack([te * 2, te * 2 + 1])
     return tr, te
     
 
 def split(files, labels, test_size=0.1, random_state=RANDOM_STATE):
     train, test = split_indices(files, labels, test_size, random_state)
-    return files[train], files[test], labels[train], labels[test]
+    return files[train], files[test], labels[train,:], labels[test,:]
 
 
 def load_features(fnames, test=False):
