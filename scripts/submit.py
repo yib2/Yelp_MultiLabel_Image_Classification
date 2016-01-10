@@ -25,7 +25,7 @@ def submit_vote_by_label(fn, file_pid_to_bid):
 		    count = count + 1
 		    #print np.sum(labels)/1.0/len(labels)
 		    #print labels
-		    if (np.sum(labels) < 0.5 * len(labels)):
+		    if (np.sum(labels) < 0.3 * len(labels)):
 		        tmp =  test_id_labels.loc[test_id_labels['business_id'] == bid, 'labels'].apply(str).apply(lambda x : x.split()).values.tolist()[0]
 		        #tmp = [int(x) for x in tmp]
 		        #print tmp, classes-1
